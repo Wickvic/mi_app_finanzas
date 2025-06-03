@@ -72,26 +72,35 @@ def mostrar_vision_financiera(df_mov, df_presupuesto, obtener_saldos_iniciales, 
     with st.expander("🏦 Distribución por cuentas"):
         with st.popover("ℹ️"):
             st.markdown("Calcula el saldo final por cuenta, considerando ingresos, gastos y transferencias")
-        df_saldos_iniciales = obtener_saldos_iniciales()
-        st.write("🔍 Resultado de obtener_saldos_iniciales():", df_saldos_iniciales)
 
-        df_saldos = (
-            pd.DataFrame.from_dict(df_saldos_iniciales, orient="index", columns=["saldo"])
-            .rename_axis("cuenta")
-            .reset_index()
-            .set_index("cuenta")
-            .astype(float))
-        df_saldos["ingresos"] = df_mov[df_mov["tipo"] == "ingreso"].groupby("cuenta")["importe"].sum()
-        df_saldos["gastos"] = df_mov[df_mov["tipo"] == "gasto"].groupby("cuenta")["importe"].sum()
-        df_saldos["transferencias_recibidas"] = df_mov[df_mov["tipo"] == "transferencia"].groupby("hacia")["importe"].sum()
-        df_saldos["transferencias_enviadas"] = df_mov[df_mov["tipo"] == "transferencia"].groupby("desde")["importe"].sum()
-        df_saldos = df_saldos.fillna(0)
-        df_saldos["saldo_final"] = (
-            df_saldos["saldo"] + df_saldos["ingresos"] - df_saldos["gastos"] +
-            df_saldos["transferencias_recibidas"] - df_saldos["transferencias_enviadas"]
-        )
-        st.dataframe(df_saldos[["saldo_final"]].sort_values("saldo_final", ascending=False))
+        df_saldos_raw = pd.DataFrame(obtener_saldos_iniciales())
 
+        if df_saldos_raw.empty or "cuenta" not in df_saldos_raw.columns:
+            st.warning("⚠️ No se han encontrado saldos iniciales válidos.")
+        else:
+            df_saldos = (
+                df_saldos_raw[["cuenta", "saldo_inicial"]]
+                .set_index("cuenta")
+                .rename(columns={"saldo_inicial": "saldo"})
+                .astype(float)
+            )
+
+            df_saldos["ingresos"] = df_mov[df_mov["tipo"] == "ingreso"].groupby("cuenta")["importe"].sum()
+            df_saldos["gastos"] = df_mov[df_mov["tipo"] == "gasto"].groupby("cuenta")["importe"].sum()
+            df_saldos["transferencias_recibidas"] = df_mov[df_mov["tipo"] == "transferencia"].groupby("hacia")["importe"].sum()
+            df_saldos["transferencias_enviadas"] = df_mov[df_mov["tipo"] == "transferencia"].groupby("desde")["importe"].sum()
+
+            df_saldos = df_saldos.fillna(0)
+
+            df_saldos["saldo_final"] = (
+                df_saldos["saldo"]
+                + df_saldos["ingresos"]
+                - df_saldos["gastos"]
+                + df_saldos["transferencias_recibidas"]
+                - df_saldos["transferencias_enviadas"]
+            )
+
+            st.dataframe(df_saldos[["saldo_final"]].sort_values("saldo_final", ascending=False))
     with st.expander("💪 Objetivos financieros (por cuenta)"):
         with st.popover("ℹ️"):
             st.markdown("Tasa de ahorro total acumulada sobre tus ingresos del año")

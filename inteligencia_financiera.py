@@ -162,14 +162,18 @@ def mostrar_inteligencia_financiera(df_mov, df_presupuesto, df_ingresos, df_gast
     with st.expander("🏁 Seguimiento independencia financiera"):
         with st.popover("ℹ️"):
             st.markdown("Calcula cuántos meses podrías vivir sin ingresos laborales")
+
         ingresos_pasivos = st.number_input("Ingresos pasivos mensuales (€)", min_value=0.0, value=0.0)
         gastos_medio     = df_gastos.groupby(df_gastos["fecha"].dt.month)["importe"].sum().mean()
-        df_saldos_raw    = pd.DataFrame(obtener_saldos_iniciales())
+
+        df_saldos_raw = pd.DataFrame(obtener_saldos_iniciales()).rename(columns={"saldo_inicial": "saldo"})
 
         if "cuenta" in df_saldos_raw.columns:
             df_saldos = df_saldos_raw.set_index("cuenta")
+            df_saldos["saldo"] = df_saldos["saldo"].astype(float)
+
             df_saldos["saldo_final"] = (
-                df_saldos["saldo"].astype(float)
+                df_saldos["saldo"]
                 + df_mov[df_mov["tipo"] == "ingreso"].groupby("cuenta")["importe"].sum().fillna(0)
                 - df_mov[df_mov["tipo"] == "gasto"].groupby("cuenta")["importe"].sum().fillna(0)
                 + df_mov[df_mov["tipo"] == "transferencia"].groupby("hacia")["importe"].sum().fillna(0)
@@ -185,11 +189,12 @@ def mostrar_inteligencia_financiera(df_mov, df_presupuesto, df_ingresos, df_gast
         else:
             st.info("No hay datos suficientes para calcular independencia financiera")
 
+
     # 5) Evolución del saldo por cuenta
     with st.expander("💳 Evolución del saldo por cuenta"):
         with st.popover("ℹ️"):
             st.markdown("Muestra cómo evolucionan los saldos por cada cuenta bancaria")
-        df_saldos_raw = pd.DataFrame(obtener_saldos_iniciales())
+        df_saldos_raw = pd.DataFrame(obtener_saldos_iniciales()).rename(columns={"saldo_inicial": "saldo"})
         if "cuenta" not in df_saldos_raw.columns:
             st.error("No se encontraron saldos iniciales")
             return

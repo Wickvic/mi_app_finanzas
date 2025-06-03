@@ -108,11 +108,21 @@ def mostrar_dashboard(df_ingresos, df_gastos, df_transf, cuentas, meses, obtener
     df_gastos_mes = df_mov_mes.groupby("categoria")["importe"].sum().reset_index()
     df_gastos_mes.columns = ["categoria", "real"]
 
-    df_presupuesto = pd.DataFrame(supabase.table("presupuestos").select("*").eq("mes", mes_actual).execute().data)
+    df_presupuesto = pd.DataFrame(
+        supabase.table("presupuestos").select("*").eq("mes", mes_actual).execute().data
+    )
 
+    # ✅ Validar que tiene datos y la columna 'categoria'
+    if df_presupuesto.empty or "categoria" not in df_presupuesto.columns:
+        st.warning("⚠️ No hay presupuesto cargado para este mes o falta la columna 'categoria'.")
+        return
+
+    # Proceder solo si todo está correcto
     df_comparativa = pd.merge(df_presupuesto, df_gastos_mes, on="categoria", how="outer").fillna(0)
     df_comparativa["diferencia"] = df_comparativa["importe"] - df_comparativa["real"]
     df_comparativa.rename(columns={"importe": "presupuesto"}, inplace=True)
+
+
 
     st.metric("💸 Gasto total del mes", f"{df_gastos_mes['real'].sum():,.2f} €")
     st.metric("📆 Presupuesto total del mes", f"{df_presupuesto['presupuesto'].sum():,.2f} €")

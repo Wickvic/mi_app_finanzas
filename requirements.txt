@@ -1,3 +1,5 @@
 streamlit
-supabase
 pandas
+python-dotenv
+supabase
+xhtml2pdf

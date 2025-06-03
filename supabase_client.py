@@ -1,13 +1,22 @@
-
 from supabase import create_client, Client
+from dotenv import load_dotenv
 import os
 
-# Sustituye estos valores con los tuyos de Supabase
-SUPABASE_URL = "https://nfjevxpqpkaqqqnhdfuf.supabase.co"
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mamV2eHBxcGthcXFxbmhkZnVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDg3NzI3MjMsImV4cCI6MjA2NDM0ODcyM30.4RQhTyCCk37TAGZvYIr6L6bx-xpoGF95Q7DlViQhGFM"
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise Exception("❌ Variables de entorno no cargadas correctamente")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 def insertar_movimiento(data):
-    response = supabase.table("movimientos").insert(data).execute()
-    return response
+    return supabase.table("movimientos").insert(data).execute()
+
+def obtener_saldos_iniciales():
+    return supabase.table("saldos_iniciales").select("*").execute().data

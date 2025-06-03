@@ -7,7 +7,49 @@ from supabase_client import supabase
 
 def mostrar_dashboard(df_ingresos, df_gastos, df_transf, cuentas, meses, obtener_saldos_iniciales):
 
-    st.subheader("📊 Dashboard")
+    df_saldos_raw = pd.DataFrame(obtener_saldos_iniciales()).rename(columns={"saldo_inicial": "saldo"})
+
+    if "cuenta" in df_saldos_raw.columns:
+        df_saldos = df_saldos_raw.set_index("cuenta")
+        df_saldos["saldo"] = df_saldos["saldo"].astype(float)
+
+        df_saldos["ingresos"] = (
+            df_ingresos
+            .groupby("cuenta")["importe"]
+            .sum()
+        )
+        df_saldos["gastos"] = (
+            df_gastos
+            .groupby("cuenta")["importe"]
+            .sum()
+        )
+        df_saldos["transferencias_recibidas"] = (
+            df_transf
+            .groupby("hacia")["importe"]
+            .sum()
+        )
+        df_saldos["transferencias_enviadas"] = (
+            df_transf
+            .groupby("desde")["importe"]
+            .sum()
+        )
+
+        df_saldos = df_saldos.fillna(0)
+        df_saldos["saldo_actual"] = (
+            df_saldos["saldo"]
+            + df_saldos["ingresos"]
+            - df_saldos["gastos"]
+            + df_saldos["transferencias_recibidas"]
+            - df_saldos["transferencias_enviadas"]
+        )
+
+        st.subheader("💳 Balance actual por cuenta")
+        st.dataframe(df_saldos[["saldo_actual"]].sort_values(by="saldo_actual", ascending=False).style.format("{:.2f} €"))
+        st.metric("💼 Total disponible", f"{df_saldos['saldo_actual'].sum():,.2f} €")
+    else:
+        st.warning("No se han encontrado saldos iniciales.")
+
+
     st.markdown("### 📤 Exportar datos")
 
     df_todos = pd.concat([df_ingresos, df_gastos, df_transf], ignore_index=True)

@@ -350,7 +350,7 @@ with tabs[5]:
     from datetime import date
     import numpy as np
 
-    st.markdown("### 📊 Visión general del mes")
+    st.markdown("### 📊 Dashboard")
 
     # Filtrar datos del mes actual
     hoy = date.today()

@@ -4,6 +4,11 @@ import pandas as pd
 def mostrar_inteligencia_financiera(df_mov, df_presupuesto, df_ingresos, df_gastos, df_transf, cuentas, obtener_saldos_iniciales):
     st.title("🧠 Inteligencia Financiera")
 
+    df_ingresos["fecha"] = pd.to_datetime(df_ingresos["fecha"], errors="coerce")
+    df_gastos["fecha"] = pd.to_datetime(df_gastos["fecha"], errors="coerce")
+    df_transf["fecha"] = pd.to_datetime(df_transf["fecha"], errors="coerce")
+    df_mov["fecha"] = pd.to_datetime(df_mov["fecha"], errors="coerce")
+
     # — Preparar fechas y datos base —
     df_mov["fecha"] = pd.to_datetime(df_mov["fecha"], errors="coerce")
     df_mov["mes"]   = df_mov["fecha"].dt.month
